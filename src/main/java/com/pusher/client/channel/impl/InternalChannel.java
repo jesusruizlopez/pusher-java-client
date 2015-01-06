@@ -17,4 +17,8 @@ public interface InternalChannel extends Channel, Comparable<InternalChannel> {
     void setEventListener(ChannelEventListener listener);
 
     ChannelEventListener getEventListener();
+
+    String getResumeAfter();
+
+    void setResumeAfter(String id);
 }

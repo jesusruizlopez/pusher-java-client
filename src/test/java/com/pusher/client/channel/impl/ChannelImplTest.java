@@ -112,7 +112,7 @@ public class ChannelImplTest {
 
         channel.bind(EVENT_NAME, mockListener);
         channel.onMessage("DifferentEventName",
-                "{\"event\":\"event1\",\"data\":{\"fish\":\"chips\"}}");
+                "{\"event\":\"event1\",\"data\":\"{\\\"fish\\\":\\\"chips\\\"}\"}");
 
         verify(mockListener, never())
                 .onEvent(anyString(), anyString(), anyString());
@@ -192,6 +192,31 @@ public class ChannelImplTest {
         channel.updateState(ChannelState.UNSUBSCRIBED);
         channel.unbind(EVENT_NAME, mockListener);
     }
+
+    @Test
+    public void testResumeAfterUpdatedOnMessage() {
+        channel.onMessage(EVENT_NAME,
+                "{\"id\":\"foo\",\"event\":\"event1\",\"data\":\"{\\\"fish\\\":\\\"chips\\\"}\"}");
+        assertEquals("foo", channel.getResumeAfter());
+    }
+
+    @Test
+    public void testResumeAfterUpdatedOnSubscriptionSucceeded() {
+        channel.setResumeAfter("bar");
+        channel.onMessage(
+                "pusher_internal:subscription_succeeded",
+                "{\"event\":\"pusher_internal:subscription_succeeded\",\"data\":\"{\\\"resume_after\\\":\\\"foo\\\"}\",\"channel\":\""
+                    + getChannelName() + "\"}");
+        assertEquals("foo", channel.getResumeAfter());
+    }
+
+    @Test
+    public void testResumeAfterIsPassedToTheSubscribeMessage() {
+        channel.setResumeAfter("foo");
+        assertEquals("{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\""
+                + getChannelName() + "\",\"resume_after\":\"foo\"}}", channel.toSubscribeMessage());
+    }
+
 
     /* end of tests */
 

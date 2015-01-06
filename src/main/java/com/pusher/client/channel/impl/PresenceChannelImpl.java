@@ -79,6 +79,9 @@ public class PresenceChannelImpl extends PrivateChannelImpl implements
 
             Map<Object, Object> dataMap = new LinkedHashMap<Object, Object>();
             dataMap.put("channel", name);
+            if (resumeAfter != null) {
+                dataMap.put("resume_after", resumeAfter);
+            }
             dataMap.put("auth", authKey);
             dataMap.put("channel_data", channelData);
 

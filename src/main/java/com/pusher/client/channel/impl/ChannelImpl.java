@@ -19,6 +19,7 @@ public class ChannelImpl implements InternalChannel {
     protected final String name;
     protected final Map<String, Set<SubscriptionEventListener>> eventNameToListenerMap = new HashMap<String, Set<SubscriptionEventListener>>();
     protected volatile ChannelState state = ChannelState.INITIAL;
+    protected String resumeAfter;
     private ChannelEventListener eventListener;
     private final Factory factory;
 
@@ -47,6 +48,14 @@ public class ChannelImpl implements InternalChannel {
     @Override
     public String getName() {
         return name;
+    }
+
+    public void setResumeAfter(String id) {
+        resumeAfter = id;
+    }
+
+    public String getResumeAfter() {
+        return resumeAfter;
     }
 
     @Override
@@ -84,16 +93,29 @@ public class ChannelImpl implements InternalChannel {
     @Override
     public void onMessage(final String event, String message) {
 
+        Gson gson = new Gson();
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> jsonObject = gson.fromJson(message, Map.class);
+        final String data = (String) jsonObject.get("data");
+
         if (event.equals(SUBSCRIPTION_SUCCESS_EVENT)) {
             updateState(ChannelState.SUBSCRIBED);
+
+            Map<Object, Object> dataMap = gson.fromJson(data, Map.class);
+            resumeAfter = (String) dataMap.get("resume_after");
         } else {
             Set<SubscriptionEventListener> listeners = eventNameToListenerMap
                     .get(event);
+
+            final String eventId = (String) jsonObject.get("id");
+
+            // Update last ID
+            if (eventId != null) {
+                resumeAfter = eventId;
+            }
+
             if (listeners != null) {
                 for (final SubscriptionEventListener listener : listeners) {
-
-                    final String data = extractDataFrom(message);
-
                     factory.getEventQueue().execute(new Runnable() {
                         @Override
                         public void run() {
@@ -113,6 +135,10 @@ public class ChannelImpl implements InternalChannel {
 
         Map<Object, Object> dataMap = new LinkedHashMap<Object, Object>();
         dataMap.put("channel", name);
+
+        if (resumeAfter != null) {
+            dataMap.put("resume_after", resumeAfter);
+        }
 
         jsonObject.put("data", dataMap);
 
@@ -169,13 +195,6 @@ public class ChannelImpl implements InternalChannel {
     @Override
     public String toString() {
         return String.format("[Public Channel: name=%s]", name);
-    }
-
-    @SuppressWarnings("unchecked")
-    private String extractDataFrom(String message) {
-        Gson gson = new Gson();
-        Map<Object, Object> jsonObject = gson.fromJson(message, Map.class);
-        return (String) jsonObject.get("data");
     }
 
     protected String[] getDisallowedNameExpressions() {

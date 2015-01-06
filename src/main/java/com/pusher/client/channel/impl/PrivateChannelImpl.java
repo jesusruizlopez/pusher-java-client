@@ -96,6 +96,9 @@ public class PrivateChannelImpl extends ChannelImpl implements PrivateChannel {
 
             Map<Object, Object> dataMap = new LinkedHashMap<Object, Object>();
             dataMap.put("channel", name);
+            if (resumeAfter != null) {
+                dataMap.put("resume_after", resumeAfter);
+            }
             dataMap.put("auth", authKey);
 
             jsonObject.put("data", dataMap);

@@ -189,6 +189,14 @@ public class PrivateChannelImplTest extends ChannelImplTest {
         channel.bind("private-myEvent", listener);
     }
 
+    @Override
+    @Test
+    public void testResumeAfterIsPassedToTheSubscribeMessage() {
+        channel.setResumeAfter("foo");
+        assertEquals("{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\""
+                + getChannelName() + "\",\"resume_after\":\"foo\"," + AUTH_TOKEN + "}}", channel.toSubscribeMessage());
+    }
+
     /* end of tests */
 
     @Override

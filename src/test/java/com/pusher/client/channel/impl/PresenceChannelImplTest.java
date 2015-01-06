@@ -181,6 +181,25 @@ public class PresenceChannelImplTest extends PrivateChannelImplTest {
         newInstance("presence-stuffchannel");
     }
 
+    @Override
+    @Test
+    public void testResumeAfterUpdatedOnSubscriptionSucceeded() {
+      channel.setResumeAfter("bar");
+        channel.onMessage(
+                "pusher_internal:subscription_succeeded",
+                "{\"event\":\"pusher_internal:subscription_succeeded\",\"data\":\"{\\\"resume_after\\\":\\\"foo\\\",\\\"presence\\\":{\\\"ids\\\":[],\\\"hash\\\":{}}}\",\"channel\":\""
+                    + getChannelName() + "\"}");
+        assertEquals("foo", channel.getResumeAfter());
+    }
+
+    @Override
+    @Test
+    public void testResumeAfterIsPassedToTheSubscribeMessage() {
+        channel.setResumeAfter("foo");
+        assertEquals("{\"event\":\"pusher:subscribe\",\"data\":{\"channel\":\""
+                + getChannelName() + "\",\"resume_after\":\"foo\"," + AUTH_RESPONSE + "}}", channel.toSubscribeMessage());
+    }
+
     /* end of tests */
 
     @Override
